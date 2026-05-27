@@ -1,0 +1,23 @@
+@prefix adms: <http://www.w3.org/ns/adms#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix v: <http://www.w3.org/2006/vcard/ns#> .
+
+<https://example.org/semantic-artifacts/example-skos> a dcat:Dataset ;
+    adms:identifier "default" ;
+    dct:title "Example SKOS Vocabulary" ;
+    dct:description "A small SKOS vocabulary used to demonstrate publishing semantic artifacts with Axiom." ;
+    dct:publisher [
+        a foaf:Agent ;
+        v:fn "Example Publisher"
+    ] ;
+    dcat:contactPoint [
+        a v:Kind ;
+        v:fn "Example Maintainer" ;
+        v:hasEmail "maintainer@example.org"
+    ] .
+
+<https://example.org/semantic-artifacts/example-skos/distributions/skos> a dcat:SkosDistribution ;
+    adms:identifier "skos" ;
+    dct:filename "vocabularies/example-skos.ttl" .

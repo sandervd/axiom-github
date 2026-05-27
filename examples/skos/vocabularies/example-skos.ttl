@@ -1,0 +1,28 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/vocabulary/status/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ex:scheme a skos:ConceptScheme ;
+    dct:title "Example Status Vocabulary" ;
+    skos:prefLabel "Example Status Vocabulary"@en ;
+    skos:hasTopConcept ex:draft,
+        ex:published,
+        ex:retired .
+
+ex:draft a skos:Concept ;
+    skos:prefLabel "Draft"@en ;
+    skos:definition "An item that is still being prepared."@en ;
+    skos:inScheme ex:scheme ;
+    skos:topConceptOf ex:scheme .
+
+ex:published a skos:Concept ;
+    skos:prefLabel "Published"@en ;
+    skos:definition "An item that has been released for use."@en ;
+    skos:inScheme ex:scheme ;
+    skos:topConceptOf ex:scheme .
+
+ex:retired a skos:Concept ;
+    skos:prefLabel "Retired"@en ;
+    skos:definition "An item that should no longer be used for new work."@en ;
+    skos:inScheme ex:scheme ;
+    skos:topConceptOf ex:scheme .

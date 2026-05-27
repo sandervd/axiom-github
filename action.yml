@@ -1,0 +1,127 @@
+name: Publish Axiom Artifact
+description: Publish semantic artifacts with axiom-cli.
+
+inputs:
+  repository:
+    description: Local Axiom repository alias used by axiom push.
+    required: false
+    default: default
+  repository-endpoint:
+    description: OCI registry endpoint.
+    required: false
+    default: ghcr.io
+  username:
+    description: Registry username. Defaults to github.actor.
+    required: false
+    default: ""
+  password:
+    description: Registry password or token. Defaults to github.token.
+    required: false
+    default: ""
+  name:
+    description: OCI artifact name. Defaults to github.repository.
+    required: false
+    default: ""
+  version:
+    description: Artifact version. Defaults to tag name without leading v, or the commit SHA.
+    required: false
+    default: ""
+  working-directory:
+    description: Directory containing model.ttl.
+    required: false
+    default: "."
+  axiom-version:
+    description: Version of axiom-cli to install from PyPI.
+    required: false
+    default: "0.1.0"
+  insecure:
+    description: Use http instead of https for the registry.
+    required: false
+    default: "false"
+  tls-verify:
+    description: Verify registry TLS certificates.
+    required: false
+    default: "true"
+
+outputs:
+  name:
+    description: Published artifact name.
+    value: ${{ steps.resolve.outputs.name }}
+  version:
+    description: Published artifact version.
+    value: ${{ steps.resolve.outputs.version }}
+  repository:
+    description: Axiom repository alias used for publication.
+    value: ${{ inputs.repository }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Axiom CLI
+      shell: bash
+      env:
+        AXIOM_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        python -m pip install "axiom-cli==${{ inputs.axiom-version }}"
+        python "$AXIOM_ACTION_PATH/scripts/patch_axiom_cli_schema_paths.py"
+
+    - name: Resolve publication inputs
+      id: resolve
+      shell: bash
+      env:
+        INPUT_NAME: ${{ inputs.name }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+
+        name="${INPUT_NAME:-${GITHUB_REPOSITORY}}"
+        if [ -z "$name" ]; then
+          echo "::error::Unable to resolve artifact name. Set the 'name' input."
+          exit 1
+        fi
+
+        version="$INPUT_VERSION"
+        if [ -z "$version" ]; then
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ] && [ -n "${GITHUB_REF_NAME:-}" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="${GITHUB_SHA}"
+          fi
+        fi
+
+        echo "name=$name" >> "$GITHUB_OUTPUT"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Write Axiom repository config
+      shell: bash
+      env:
+        AXIOM_ACTION_PATH: ${{ github.action_path }}
+        AXIOM_REPOSITORY: ${{ inputs.repository }}
+        AXIOM_REPOSITORY_ENDPOINT: ${{ inputs.repository-endpoint }}
+        AXIOM_USERNAME: ${{ inputs.username || github.actor }}
+        AXIOM_PASSWORD: ${{ inputs.password || github.token }}
+        AXIOM_INSECURE: ${{ inputs.insecure }}
+        AXIOM_TLS_VERIFY: ${{ inputs.tls-verify }}
+      run: python "$AXIOM_ACTION_PATH/scripts/write_repository_config.py"
+
+    - name: Publish artifact
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        AXIOM_NAME: ${{ steps.resolve.outputs.name }}
+        AXIOM_VERSION: ${{ steps.resolve.outputs.version }}
+        AXIOM_REPOSITORY: ${{ inputs.repository }}
+      run: |
+        set -euo pipefail
+
+        if [ ! -f model.ttl ]; then
+          echo "::error::model.ttl was not found in '${{ inputs.working-directory }}'."
+          exit 1
+        fi
+
+        axiom push "$AXIOM_REPOSITORY" "$AXIOM_NAME" "$AXIOM_VERSION"

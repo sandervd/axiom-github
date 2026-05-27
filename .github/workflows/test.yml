@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate action metadata
+        run: python -c "from pathlib import Path; text = Path('action.yml').read_text(encoding='utf-8'); assert 'runs:' in text and 'using: composite' in text"
+
+      - name: Test repository config writer
+        env:
+          AXIOM_REPOSITORY: default
+          AXIOM_REPOSITORY_ENDPOINT: ghcr.io
+          AXIOM_USERNAME: test-user
+          AXIOM_PASSWORD: test-token
+          AXIOM_INSECURE: "false"
+          AXIOM_TLS_VERIFY: "true"
+        run: python scripts/write_repository_config.py
