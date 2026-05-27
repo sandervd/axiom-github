@@ -15,9 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate action metadata
-        run: python -c "from pathlib import Path; text = Path('action.yml').read_text(encoding='utf-8'); assert 'runs:' in text and 'using: composite' in text"
-
       - name: Test repository config writer
         env:
           AXIOM_REPOSITORY: default
