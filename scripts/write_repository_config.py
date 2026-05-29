@@ -46,9 +46,7 @@ def main() -> None:
     insecure = ttl_bool(env("AXIOM_INSECURE", "false"))
     tls_verify = ttl_bool(env("AXIOM_TLS_VERIFY", "true"))
 
-    config_dir = Path.home() / ".config" / "axiom"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = config_dir / "repository.ttl"
+    config_file = Path('.') / "repository.ttl"
 
     subject = f"http://example.com/axiom/repository/{quote(repository, safe='')}"
     content = f"""@prefix adms: <http://www.w3.org/ns/adms#> .
